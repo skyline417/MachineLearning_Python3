@@ -1,6 +1,7 @@
 import numpy as np
 from math import sqrt
 from collections import Counter
+from .metrics import accuracy_score
 
 
 class KNNClassifier:
@@ -8,8 +9,7 @@ class KNNClassifier:
     def __init__(self, k):
         """初始化kNN分类器"""
         assert k >= 1, "k must be valid"
-        self.k = k #如果k合法，KNNClassifier里的成员变量k则赋值为用户传进来的k
-        #训练数据集外面用户不可见 设为私有 前面是_
+        self.k = k
         self._X_train = None
         self._y_train = None
 
@@ -17,44 +17,44 @@ class KNNClassifier:
         """根据训练数据集X_train和y_train训练kNN分类器"""
         assert X_train.shape[0] == y_train.shape[0], \
             "the size of X_train must be equal to the size of y_train"
-            #X_train的样本数 == y_train的标签数
         assert self.k <= X_train.shape[0], \
             "the size of X_train must be at least k."
-            #k <= X_train的样本数
-        
-        #没有什么算法 只是将训练集赋值
+
         self._X_train = X_train
         self._y_train = y_train
-        return self #scikit-learn中fit函数返回自身
+        return self
 
-    def predict(self, X_predict): #和sklearn一样 要求传入二维矩阵
+    def predict(self, X_predict):
         """给定待预测数据集X_predict，返回表示X_predict的结果向量"""
         assert self._X_train is not None and self._y_train is not None, \
                 "must fit before predict!"
-                #运行predict前 X_train和y_train不应该是none了
         assert X_predict.shape[1] == self._X_train.shape[1], \
                 "the feature number of X_predict must be equal to X_train"
-                #传进来的样本列数 == 训练集列数
 
-        y_predict = [self._predict(x) for x in X_predict] 
-        #预测结果放入向量中
-        #私有方法_predict 对一个样本进行预测
-        return np.array(y_predict) #结果封装成np.array
+        y_predict = [self._predict(x) for x in X_predict]
+        return np.array(y_predict)
 
     def _predict(self, x):
         """给定单个待预测数据x，返回x的预测结果值"""
         assert x.shape[0] == self._X_train.shape[1], \
             "the feature number of x must be equal to X_train"
-        #x的元素个数等于训练集中特征数
 
         distances = [sqrt(np.sum((x_train - x) ** 2))
                      for x_train in self._X_train]
-        nearest = np.argsort(distances) #按值排序后 返回索引
+        nearest = np.argsort(distances)
 
-        topK_y = [self._y_train[i] for i in nearest[:self.k]] # y_train: 1或0
-        votes = Counter(topK_y) #vots是元组（谁，多少票）的列表, Counter({1: 5, 0: 1})
+        topK_y = [self._y_train[i] for i in nearest[:self.k]]
+        votes = Counter(topK_y)
 
-        return votes.most_common(1)[0][0] #票数最多的1个元素的元组列表 该列表的第0个元组的第0个元素（指是谁）
+        return votes.most_common(1)[0][0]
 
-    def __repr__(self): #represent
+    def score(self, X_test, y_test):
+        """根据测试数据集 X_test 和 y_test 确定当前模型的准确度"""
+
+        y_predict = self.predict(X_test)
+        return accuracy_score(y_test, y_predict)
+
+    def __repr__(self):
         return "KNN(k=%d)" % self.k
+
+
