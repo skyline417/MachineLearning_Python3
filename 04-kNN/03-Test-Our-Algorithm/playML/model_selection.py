@@ -10,7 +10,8 @@ def train_test_split(X, y, test_ratio=0.2, seed=None):
 
     if seed:
         np.random.seed(seed)
-
+    #debug的时候 希望打乱的结果相同 就用seed
+    
     shuffled_indexes = np.random.permutation(len(X))
 
     test_size = int(len(X) * test_ratio)
